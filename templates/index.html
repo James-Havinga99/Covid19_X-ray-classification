@@ -1,0 +1,155 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+		<title>Covid-19 X-Ray Classifier</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/main.css') }}" />
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header" class="alt">
+						<span class="logo"><img src="/static/virus.png" alt="" style="width: 100px;" /></span>
+						<h1>Covid-19 X-Ray Classifier</h1>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul>
+							<li><a href="#intro" class="active">Test Yourself</a></li>
+							<li><a href="#first">Discaimer</a></li>
+							<li><a href="#second">About</a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Test Yourself -->
+							<section id="intro" class="main">
+								<div class="spotlight">
+									<div class="content">
+										<header class="major">
+											<h2>Test Yourself</h2>
+										</header>
+										<p style="width: 80%;">Uplaod an image of an X-Ray of your lungs and our deep learning model
+											will give you the probability of you having Covid-19.
+										</p>
+										<ul class="actions">
+											<li><input id="file" type="file"></input>
+												<label for="file" class="button">Uplaod</label>
+											</li>
+											<li><label class="button" id="predict-button">Predict</label></li>
+										</ul>
+										<p>Prediction: <span id="result"></span></p>
+										<p>Probability: <span id="probability"></span></p>
+									</div>
+									<div class="right-content" style="width: 550px;">
+										<span class="image"><img id="selected-image" src="" alt=""/></span>
+										<div id="extra_info_negative" style="display: none; text-align: center;">
+											<p>Good News... <br/> Your X-Ray is predicted to be Covid-19 negative. But if you still have symptoms for Covid please consult a Doctor.</p>
+										</div>
+										<div id="extra_info_positive" style="display: none; text-align: center;">
+											<p>Bad News... <br/> Your X-Ray is predicted to be Covid-19 positive. Remember this is not a garanteed diognosis so we suggest consulting a doctor.</p>
+										</div>
+									</div>
+									
+								</div>
+							</section>
+
+						<!-- Disclaimer -->
+							<section id="first" class="main special">
+								<header class="major">
+									<h2>Disclaimer</h2>
+									<p>Please note that the results given in this application
+										are not 100% accurate. The results can vary in percentage
+										of probability. And therefore should only be seen as a probability
+										and not a guaranteed diognosis. For more information on the use of 
+										AI in Covid-19 X-Ray scans please click learn more below.
+									</p>
+								</header>
+								<footer class="major">
+									<ul class="actions special">
+										<li><a href="https://www.nature.com/articles/s41467-020-17971-2" class="button">Learn More</a></li>
+									</ul>
+								</footer>
+							</section>
+
+						<!-- About -->
+							<section id="second" class="main special">
+								<header class="major">
+									<h2>About Us</h2>
+									<p>This application operates through the use of a deep learning model that has
+										been trained on roughly 200 images of healthy lung X-Rays and then roughly 200
+										Covid-19 postivie X-rays. The model was trained using tensorflow and keras which are both
+										free open source software libraries used for machine learning.
+										There is alot of room for improvement in terms
+										of the accuracy of the model. As at the moment the model is only about 90%
+										accurate. And for medical purposes that would then need to be 
+										more in the regions of 98% to 100% accurate.
+									</p>
+								</header>
+							</section>
+					</div>
+			</div>
+		<!-- Scripts -->
+			<script src="/static/jquery.min.js"></script>
+			<script src="/static/jquery.scrollex.min.js"></script>
+			<script src="/static/jquery.scrolly.min.js"></script>
+			<script src="/static/browser.min.js"></script>
+			<script src="/static/breakpoints.min.js"></script>
+			<script src="/static/util.js"></script>
+			<script src="/static/main.js"></script>
+
+			
+<script>
+    let base64Image;
+    $("#file").change(function() {
+		console.log("Clicked")
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let dataURL = reader.result;
+            $('#selected-image').attr("src", dataURL);
+            base64Image = dataURL.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
+            console.log(base64Image);
+        }
+        reader.readAsDataURL($("#file")[0].files[0]);
+        $("#result").text("");
+        $("#probability").text("");
+
+    });
+
+    $("#predict-button").click(function(){
+            let message = {
+            image: base64Image
+        }
+        console.log(message);
+        $.post("http://127.0.0.1:5000/predict", JSON.stringify(message), function(response){
+            $("#result").text(response.prediction.result);
+            $("#probability").text(response.prediction.accuracy.toFixed(2) * 100 + " %");
+			console.log(response);
+
+			var answer = response.prediction.result;
+			var n = document.getElementById("extra_info_negative");
+			var p = document.getElementById("extra_info_positive");
+
+			if(answer == "Covid-19 Negative") {
+				p.style.display = 'none';
+				n.style.display = 'block';
+			} 
+			else if (answer == "Covid-19 Positive"){
+				n.style.display = 'none';
+				p.style.display = 'block';
+			}
+		
+        });
+    });
+	
+</script>
+	</body>
+</html>
